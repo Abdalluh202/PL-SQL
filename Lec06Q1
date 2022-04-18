@@ -1,0 +1,15 @@
+create or replace procedure Q1(num1 in  number) is
+R_C employees%ROWTYPE;
+begin
+select * into R_C from employees where EMPLOYEE_ID=num1;
+dbms_output.put_line('LAST_NAME: '||R_C.LAST_NAME ||'  SALARY:  '||R_C.SALARY||'  EMAIL:'||R_C.EMAIL||'  PHONE_NUMBER: '||R_C.PHONE_NUMBER);
+end;
+
+declare
+number1 number:=:Enter_number1;
+
+begin 
+Q1(number1);
+end;
+
+desc employees
