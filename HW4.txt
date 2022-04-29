@@ -1,0 +1,213 @@
+----------------------Q1--------------------------------------
+
+create table Students(
+    sid number(8)  PRIMARY KEY ,
+    s_name varchar2(25),
+    Phone number(8) 
+)
+
+
+create table Enroll(
+    sid number(8) references Students(sid)  ,
+    c_no varchar2(25) references Courses(c_no),
+    TheoryMark number(10),
+    LabMark number(10)
+)
+
+create table Courses(
+    c_no varchar2(25) PRIMARY KEY  ,
+    c_name varchar2(25)
+)
+
+
+----------------------Q2--------------------------------------
+
+create or replace Procedure add_new_student(namee in varchar2,phone_number in number) is
+chek number;
+num number;
+num1 number;
+begin
+select count(SID) into num from Students;
+if num=1 then 
+    select max(SID) into num1 from Students;
+        num1:=num1+1;
+ else
+     num1:=1000;
+ end if;  
+select count(*) into chek from Students where Phone = phone_number;
+if chek=1 then
+    dbms_output.put_line('يوجد طالب لديه نفس الرقم');
+   else
+   insert into Students
+   values(num1,namee,phone_number);
+end if;
+end;
+----------------------Q3--------------------------------------
+
+create or replace Procedure add_Courses(RCourses in varchar2 ,NAMECourses in varchar2 )IS
+chek number;
+lengthCourses number;
+begin 
+select count(*) into chek from Courses where C_name=NAMECourses;
+
+if chek=1 then 
+dbms_output.put_line('تمت اضافة الماده  مسبقا');
+else
+select length(RCourses) into lengthCourses FROM dual;
+if lengthCourses=6 then 
+insert into Courses
+values(RCourses,NAMECourses);
+else
+dbms_output.put_line('طول رمز المادة المدخل اكثر او اقل من 6 حروف');
+end if;
+end if;
+
+end;
+
+
+----------------------Q4--------------------------------------
+
+create or replace Procedure Registration(stid in number,RCourses in varchar2) is
+cheknum number;
+chekc_no number;
+chekc_nume number;
+chekc_end number;
+begin
+    select count(sid) into cheknum from Students where sid=stid;
+    if cheknum=1 then
+        select count(c_no) into chekc_no from Courses where c_no=RCourses;
+                if chekc_no=1 then
+                        select count(c_name) into chekc_nume from Courses where c_no=RCourses; 
+                    if chekc_nume=1 then
+                    select count(c_no) into chekc_end from Enroll where c_no=RCourses;
+                        if chekc_end=1 then
+                        dbms_output.put_line('ان الطالب مسجل مسبقا قي نفس الماده');
+                        else 
+                            INSERT INTO enroll (sid ,c_no)
+                            values(stid,RCourses);
+                        end if;   
+                    end if; 
+                else
+                    dbms_output.put_line('ان رمز المادة غير صحيح');
+                end if;    
+        else 
+            dbms_output.put_line('ان رقم الطالب غير صحيح');
+    end  if;
+end;
+
+begin
+Registration(1000,'pro101');
+end;
+
+
+
+
+----------------------Q5--------------------------------------
+
+
+
+create or replace Procedure mark_theory_add(ssid in number,cno in varchar2,mark in number)is
+chekc_no varchar2(25); 
+chekcmark number;
+begin
+select c_no  into chekc_no from Courses where c_no=cno;
+if chekc_no=cno then
+   select count(TheoryMark) into chekcmark from Enroll where sid=ssid;
+   if chekcmark=0 then
+    if mark between 0 and 60 then
+        update  enroll
+        set TheoryMark=(mark)
+        where sid=ssid;
+     else
+     dbms_output.put_line('يحب ان تكون الدرجة بين ال 0 و 60');
+     end if;   
+
+   else
+        dbms_output.put_line('الدرجة مضافة مسبقا');
+   end if;
+else
+     dbms_output.put_line('ان الطالب غير مسجل قي نفس الماده');
+end if;
+end;
+
+----------------------Q6--------------------------------------
+
+create or replace Procedure add_lab_mark(ssid in number,cno in varchar2,mark in number)is
+chekc_no varchar2(25); 
+chekcmark number;
+begin
+select c_no  into chekc_no from Courses where c_no=cno;
+if chekc_no=cno then
+   select  count(LabMark)   into chekcmark from Enroll where sid=ssid;
+   if chekcmark=1 then
+    if mark between 0 and 40 then
+        insert into  enroll (LabMark )
+        values(mark);
+     else
+     dbms_output.put_line('يحب ان تكون الدرجة بين ال 0 و 40');
+     end if;   
+
+   else
+        dbms_output.put_line('الدرجة مضافة مسبقا');
+   end if;
+else
+     dbms_output.put_line('ان الطالب غير مسجل قي نفس الماده');
+end if;
+end;
+
+----------------------Q7--------------------------------------
+
+create or replace Function get_result (ssid in number , cno in varchar2) return varchar2 is 
+cheekTheor number;
+cheekLab number;
+LMark number;
+TMark number;
+mark number;
+markend varchar2(25);
+rcours number;
+begin
+    select count(c_no) into rcours from Enroll where sid=ssid and c_no=cno;
+    IF rcours=1 THEN
+    select count(TheoryMark),count(LabMark) into cheekTheor,cheekLab from Enroll where sid=ssid and c_no=cno;
+    if cheekTheor=1 and cheekLab=1 then
+         select LabMark into LMark from Enroll where sid=ssid and c_no=cno ;
+          select TheoryMark into TMark from Enroll where sid=ssid and c_no=cno;
+          mark:=LMark+TMark;
+          if mark>=60 then
+            markend:='Pass';
+          else
+             markend:='Fail';
+          end if;
+    else
+         dbms_output.put_line('Not entered');
+    end if;
+ else
+    dbms_output.put_line(' رمز الماده غير صحيح');
+ end if ;   
+return markend;
+end;
+
+----------------------Q8--------------------------------------
+create or replace Procedure show_student_results(ssid in number) is  
+cursor show_student is select c_no  from Enroll where sid=ssid;
+CNO Enroll.c_no %type;
+begin
+OPEN show_student;
+    loop
+        fetch show_student into CNO;
+        exit when show_student%notfound;
+        dbms_output.put_line(get_result(ssid,CNO));
+    end loop;
+CLOSE show_student;
+end;
+----------------------TEST--------------------------------------
+
+begin
+-- add_new_student('BOD',05594556);
+--add_Courses('101PRG','pl/sql');
+--Registration(1000,'101PRG');
+--mark_theory_add(1000,'101PRG',60);
+--add_lab_mark(1000,'101PRG',30);
+--dbms_output.put_line(get_result (1000,'101PRG'));
+--show_student_results(1000);
+end;
